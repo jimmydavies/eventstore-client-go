@@ -4,7 +4,9 @@ import (
   "net/http"
   "log"
   "io/ioutil"
+  "io"
   "encoding/json"
+  "bytes"
 )
 
 type Client struct {
@@ -21,11 +23,17 @@ func NewClient(baseUrl string, username string, password string) (*Client, error
   }, nil
 }
 
-func (client *Client) makeRequest(requestType string, path string, body string) (map[string]interface{}, error) {
+func (client *Client) makeRequest(requestType string, path string, body []byte) (map[string]interface{}, error) {
 
   httpClient := &http.Client{}
 
-  req, err := http.NewRequest(requestType, client.baseUrl + "/" + path, nil)
+  var buffer io.Reader = nil
+
+  if body != nil {
+    buffer = bytes.NewBuffer([]byte(body))
+  }
+
+  req, err := http.NewRequest(requestType, client.baseUrl + path, buffer)
 
   if err != nil {
     log.Fatal(err)
@@ -33,6 +41,10 @@ func (client *Client) makeRequest(requestType string, path string, body string) 
 
   if client.username != "" {
     req.SetBasicAuth(client.username, client.password)
+  }
+
+  if requestType != "GET" {
+    req.Header.Set("Content-Type", "application/json")
   }
 
   resp, err := httpClient.Do(req)

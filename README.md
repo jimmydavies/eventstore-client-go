@@ -3,10 +3,15 @@ Eventstore client in golang. May drop this in time, but right now the main clien
 
 ## Need to implement
  * CI/CD
- * CRUD Users
  * CRUD Persistent Subscriptions
  * CRUD Default ACLs
 
 ## Implemented so far
  * GetUser
  * GetAllUsers
+ * CreateUser
+ * EnableUser
+ * DisableUser
+ * SetUserPassword
+ * UpdateUser
+ * DeleteUser
