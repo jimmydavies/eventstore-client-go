@@ -2,6 +2,7 @@ package eventstore
 
 import (
   "net/http"
+  "net/url"
   "log"
   "io/ioutil"
   "io"
@@ -13,9 +14,18 @@ type Client struct {
   baseUrl    string
   username   string
   password   string
+  httpClient interface{
+     Do (req *http.Request) (*http.Response, error)
+  }
 }
 
 func NewClient(baseUrl string, username string, password string) (*Client, error) {
+  _, err := url.ParseRequestURI(baseUrl)
+
+  if err != nil {
+    return nil, err
+  }
+
   return &Client{
     baseUrl: baseUrl,
     username: username,
@@ -25,7 +35,9 @@ func NewClient(baseUrl string, username string, password string) (*Client, error
 
 func (client *Client) makeRequest(requestType string, path string, body []byte) (map[string]interface{}, error) {
 
-  httpClient := &http.Client{}
+  if client.httpClient == nil {
+    client.httpClient = &http.Client{}
+  }
 
   var buffer io.Reader = nil
 
@@ -36,7 +48,8 @@ func (client *Client) makeRequest(requestType string, path string, body []byte) 
   req, err := http.NewRequest(requestType, client.baseUrl + path, buffer)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err)
+    return nil, err
   }
 
   if client.username != "" {
@@ -47,13 +60,13 @@ func (client *Client) makeRequest(requestType string, path string, body []byte) 
     req.Header.Set("Content-Type", "application/json")
   }
 
-  resp, err := httpClient.Do(req)
-  defer resp.Body.Close()
-
+  resp, err := client.httpClient.Do(req)
   if err != nil {
-    log.Fatal(err)
+    log.Print(err)
+    return nil, err
   }
 
+  defer resp.Body.Close()
 
   bodyText, err := ioutil.ReadAll(resp.Body)
 
