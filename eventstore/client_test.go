@@ -6,6 +6,7 @@ import (
   "bytes"
   "io"
   "errors"
+  "container/list"
 )
 
 func TestNewClient(t *testing.T) {
@@ -52,7 +53,10 @@ func TestMakeRequest(t *testing.T) {
 
   client, _ := NewClient("http://eventstore.hostname:2113", "myuser", "mypass")
 
-  httpClient := &MockHttpClient{}
+  httpClient := &MockHttpClient{
+    responses: list.New(),
+    errs: list.New(),
+  }
 
   client.httpClient = httpClient
 
@@ -72,7 +76,7 @@ func TestMakeRequest(t *testing.T) {
 
   for _, table := range tables {
     
-    httpClient.setHttpClientResponse(table.body, table.statusCode, table.status, table.err)
+    httpClient.addHttpClientResponse(table.body, table.statusCode, table.status, table.err)
 
     _, err := client.makeRequest(table.method, "/mypath", nil)
 
@@ -86,25 +90,33 @@ func TestMakeRequest(t *testing.T) {
 }
 
 type MockHttpClient struct {
-  response *http.Response
-  err error
+  responses *list.List
+  errs *list.List
 }
 
 func (client *MockHttpClient) Do(*http.Request) (*http.Response, error) {
-  if client.err != nil {
-    return nil, client.err
+  err := client.errs.Front()
+  client.errs.Remove(err)
+
+  respElem := client.responses.Front()
+  resp := respElem.Value.(http.Response)
+  client.responses.Remove(respElem)
+
+  if err.Value != nil {
+    return nil, err.Value.(error)
   } else {
-    return client.response, nil
+    return &resp, nil
   }
 }
 
-func (client *MockHttpClient) setHttpClientResponse(body string, statusCode int, status string, err error) {
-  client.response = &http.Response{
+func (client *MockHttpClient) addHttpClientResponse(body string, statusCode int, status string, err error) {
+  response := http.Response{
     StatusCode: statusCode,
     Status: status,
     Body: io.NopCloser(bytes.NewReader([]byte(body))),
   }
 
-  client.err = err
+  client.responses.PushBack(response)
+  client.errs.PushBack(err)
 }
 

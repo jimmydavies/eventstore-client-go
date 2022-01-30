@@ -58,7 +58,7 @@ func (client *Client) CreateUser(userName string, password string, fullName stri
     log.Fatal(err)
   }
 
-  if data["success"] == false {
+  if data["success"].(bool) == false {
     log.Fatal(data["error"])
   }
 
