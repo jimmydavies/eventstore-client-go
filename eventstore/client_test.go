@@ -27,7 +27,7 @@ func TestNewClient(t *testing.T) {
 
     if table.expectedPass == true {
       if err != nil {
-        t.Errorf("Error (%s) raised for inputs %v", err.Error(), table)
+        t.Errorf("Unexpected error (%s) raised for inputs %v", err.Error(), table)
         continue
       }
 
@@ -56,14 +56,33 @@ func TestMakeRequest(t *testing.T) {
 
   client.httpClient = httpClient
 
-  httpClient.setHttpClientResponse(`{"data": {}}`, 200, nil)
+  tables := []struct {
+    method     string
+    body       string
+    statusCode int
+    status     string
+    err        error
+  } {
+    {"GET",  `{"data": {}}`, 200, "200 OK",        nil},
+    {"POST", `{"data": {}}`, 200, "200 OK",        nil},
+    {"GET",  `{"data": {}}`, 200, "200 OK",        errors.New("Something went wrong")},
+    {"GET",  `{"data": {}}`, 401, "401 Forbidden", nil},
+    {"GET",  `{"data": {}}`, 404, "404 Not Found", nil},
+  }
 
-  client.makeRequest("GET", "/mypath", nil)
+  for _, table := range tables {
+    
+    httpClient.setHttpClientResponse(table.body, table.statusCode, table.status, table.err)
 
-  httpClient.setHttpClientResponse(`{"data": {}}`, 200, nil)
-  client.makeRequest("POST", "/mypath", nil)
-  httpClient.setHttpClientResponse(`{"data": {}}`, 200, errors.New("Something went wrong"))
-  client.makeRequest("GET", "/mypath", nil)
+    _, err := client.makeRequest(table.method, "/mypath", nil)
+
+    if (table.err != nil || table.statusCode != 200) && err == nil {
+      t.Errorf("Expected error not raised for inputs %v", table)
+      continue
+    } else if table.err == nil && table.statusCode == 200 && err != nil {
+      t.Errorf("Unexpected error (%s) raised for inputs %v (%s, %d)", err.Error(), table, err.Error(), table.statusCode)
+    }
+  }
 }
 
 type MockHttpClient struct {
@@ -79,9 +98,10 @@ func (client *MockHttpClient) Do(*http.Request) (*http.Response, error) {
   }
 }
 
-func (client *MockHttpClient) setHttpClientResponse(body string, statusCode int, err error) {
+func (client *MockHttpClient) setHttpClientResponse(body string, statusCode int, status string, err error) {
   client.response = &http.Response{
     StatusCode: statusCode,
+    Status: status,
     Body: io.NopCloser(bytes.NewReader([]byte(body))),
   }
 
