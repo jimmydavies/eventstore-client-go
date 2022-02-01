@@ -42,4 +42,48 @@ func main() {
     fmt.Println(client.SetUserPassword("test-123", "new-password"))
 
     fmt.Println(client.DeleteUser("test-123"))
+
+    sub, err := client.CreateSubscription(
+      "inventory",
+      "test",
+      2,
+      0,
+      true,
+      5,
+      "RoundRobin",
+      true,
+      7,
+      1,
+      3,
+      2,
+      9,
+      6,
+      6)
+
+    sub, err = client.GetSubscription("inventory", "test")
+    fmt.Println(sub.BufferSize)
+
+    sub, err = client.UpdateSubscription(
+      "inventory",
+      "test",
+      2,
+      0,
+      true,
+      5,
+      "RoundRobin",
+      true,
+      7,
+      1,
+      3,
+      2,
+      9,
+      6,
+      10)
+    fmt.Println(sub.BufferSize)
+
+    ret, err := client.DeleteSubscription("inventory", "test")
+    fmt.Println(ret)
+
+    client.ReadDefaultACLs()
+    
 }

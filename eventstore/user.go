@@ -14,7 +14,8 @@ type User struct{
 }
 
 func (client *Client) GetUser(username string) (*User, error) {
-  data, err := client.makeRequest("GET", "/users/" + username, nil)
+  var data map[string]interface{}
+  err := client.makeRequest("GET", "/users/" + username, nil, &data)
 
   if err != nil {
     log.Fatal(err)
@@ -29,7 +30,8 @@ func (client *Client) GetUser(username string) (*User, error) {
 }
 
 func (client *Client) GetAllUsers() ([]User, error) {
-  data, err := client.makeRequest("GET", "/users", nil)
+  var data map[string]interface{}
+  err := client.makeRequest("GET", "/users", nil, &data)
 
   if err != nil {
     log.Fatal(err)
@@ -52,7 +54,8 @@ func (client *Client) CreateUser(userName string, password string, fullName stri
     "Groups": groups,
   })
 
-  data, err := client.makeRequest("POST", "/users", userData)
+  var data map[string]interface{}
+  err := client.makeRequest("POST", "/users", userData, &data)
 
   if err != nil {
     log.Fatal(err)
@@ -66,10 +69,11 @@ func (client *Client) CreateUser(userName string, password string, fullName stri
 }
 
 func (client *Client) DeleteUser(userName string) (bool) {
-  data, err := client.makeRequest("DELETE", "/users/" + userName, nil)
+  var data map[string]interface{}
+  err := client.makeRequest("DELETE", "/users/" + userName, nil, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err)
   }
 
   return data["success"].(bool)
@@ -81,7 +85,8 @@ func (client *Client) UpdateUser(userName string, fullName string, groups []stri
     "Groups": groups,
   })
 
-  data, err := client.makeRequest("PUT", "/users/" + userName, userData)
+  var data map[string]interface{}
+  err := client.makeRequest("PUT", "/users/" + userName, userData, &data)
 
   if err != nil {
     log.Fatal(err)
@@ -95,7 +100,8 @@ func (client *Client) UpdateUser(userName string, fullName string, groups []stri
 }
 
 func (client *Client) EnableUser(userName string) (*User, error) {
-  data, err := client.makeRequest("POST", "/users/" + userName + "/command/enable", nil)
+  var data map[string]interface{}
+  err := client.makeRequest("POST", "/users/" + userName + "/command/enable", nil, &data)
   
   if err != nil {
     log.Fatal(err)
@@ -109,7 +115,8 @@ func (client *Client) EnableUser(userName string) (*User, error) {
 }
 
 func (client *Client) DisableUser(userName string) (*User, error) {
-  data, err := client.makeRequest("POST", "/users/" + userName + "/command/disable", nil)
+  var data map[string]interface{}
+  err := client.makeRequest("POST", "/users/" + userName + "/command/disable", nil, &data)
   
   if err != nil {
     log.Fatal(err)
@@ -127,7 +134,8 @@ func (client *Client) SetUserPassword(userName string, password string) (bool) {
     "NewPassword": password,
   })
 
-  data, err := client.makeRequest("POST", "/users/" + userName + "/command/reset-password", userData)
+  var data map[string]interface{}
+  err := client.makeRequest("POST", "/users/" + userName + "/command/reset-password", userData, &data)
 
   if err != nil {
     log.Fatal(err)

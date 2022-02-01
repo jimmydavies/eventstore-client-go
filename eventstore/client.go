@@ -43,7 +43,7 @@ func NewClient(baseUrl string, userName string, password string) (*Client, error
   }, nil
 }
 
-func (client *Client) makeRequest(requestType string, path string, body []byte) (map[string]interface{}, error) {
+func (client *Client) makeRequest(requestType string, path string, body []byte, dataStruct interface{}) (error) {
 
   if client.httpClient == nil {
     client.httpClient = &http.Client{}
@@ -59,37 +59,36 @@ func (client *Client) makeRequest(requestType string, path string, body []byte) 
 
   if err != nil {
     log.Print(err)
-    return nil, err
+    return err
   }
 
   if client.username != "" {
     req.SetBasicAuth(client.username, client.password)
   }
 
-  if requestType != "GET" {
-    req.Header.Set("Content-Type", "application/json")
-  }
+  req.Header.Set("Content-Type", "application/json")
+  req.Header.Set("Accept", "application/json")
+  
 
   resp, err := client.httpClient.Do(req)
 
   if err != nil {
     log.Print(err)
-    return nil, err
+    return err
   }
 
   defer resp.Body.Close()
 
   // Handle Status Codes
-  if resp.StatusCode != 200 {
-    return nil, errors.New("Request failed with status code " + resp.Status)
+  if resp.StatusCode > 299 {
+    return errors.New("Request failed with status code " + resp.Status)
   }
 
   bodyText, err := ioutil.ReadAll(resp.Body)
 
-  var data map[string]interface{}
-  json.Unmarshal([]byte(string(bodyText)), &data)
+  json.Unmarshal([]byte(string(bodyText)), &dataStruct)
 
-  return data, nil
+  return nil
 }
 
   

@@ -53,11 +53,7 @@ func TestMakeRequest(t *testing.T) {
 
   client, _ := NewClient("http://eventstore.hostname:2113", "myuser", "mypass")
 
-  httpClient := &MockHttpClient{
-    responses: list.New(),
-    errs: list.New(),
-  }
-
+  httpClient := NewMockHttpClient()
   client.httpClient = httpClient
 
   tables := []struct {
@@ -75,10 +71,12 @@ func TestMakeRequest(t *testing.T) {
   }
 
   for _, table := range tables {
-    
+
+    httpClient.resetResponses()
     httpClient.addHttpClientResponse(table.body, table.statusCode, table.status, table.err)
 
-    _, err := client.makeRequest(table.method, "/mypath", nil)
+    data := map[string]interface{}{}
+    err := client.makeRequest(table.method, "/mypath", nil, &data)
 
     if (table.err != nil || table.statusCode != 200) && err == nil {
       t.Errorf("Expected error not raised for inputs %v", table)
@@ -92,6 +90,18 @@ func TestMakeRequest(t *testing.T) {
 type MockHttpClient struct {
   responses *list.List
   errs *list.List
+}
+
+func NewMockHttpClient() (*MockHttpClient) {
+  return &MockHttpClient{
+    responses: list.New(),
+    errs: list.New(),
+  }
+}
+
+func (client *MockHttpClient) resetResponses() {
+  client.responses = list.New()
+  client.errs = list.New()
 }
 
 func (client *MockHttpClient) Do(*http.Request) (*http.Response, error) {
