@@ -3,6 +3,7 @@ package eventstore
 import (
   "log"
   "encoding/json"
+  "errors"
 )
 
 type User struct{
@@ -18,7 +19,8 @@ func (client *Client) GetUser(username string) (*User, error) {
   err := client.makeRequest("GET", "/users/" + username, nil, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
   var groups []string
@@ -34,7 +36,8 @@ func (client *Client) GetAllUsers() ([]User, error) {
   err := client.makeRequest("GET", "/users", nil, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
   var users []User
@@ -58,11 +61,14 @@ func (client *Client) CreateUser(userName string, password string, fullName stri
   err := client.makeRequest("POST", "/users", userData, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
   if data["success"].(bool) == false {
-    log.Fatal(data["error"])
+    err = errors.New(data["error"].(string))
+    log.Print(err.Error())
+    return nil, err
   }
 
   return client.GetUser(data["loginName"].(string))
@@ -73,7 +79,8 @@ func (client *Client) DeleteUser(userName string) (bool) {
   err := client.makeRequest("DELETE", "/users/" + userName, nil, &data)
 
   if err != nil {
-    log.Print(err)
+    log.Print(err.Error())
+    return false
   }
 
   return data["success"].(bool)
@@ -89,11 +96,14 @@ func (client *Client) UpdateUser(userName string, fullName string, groups []stri
   err := client.makeRequest("PUT", "/users/" + userName, userData, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
-  if data["success"] == false {
-    log.Fatal(data["error"])
+  if data["success"].(bool) == false {
+    err = errors.New(data["error"].(string))
+    log.Print(err.Error())
+    return nil, err
   }
 
   return client.GetUser(data["loginName"].(string))
@@ -104,11 +114,14 @@ func (client *Client) EnableUser(userName string) (*User, error) {
   err := client.makeRequest("POST", "/users/" + userName + "/command/enable", nil, &data)
   
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
-  if data["success"] == false {
-    log.Fatal(data["error"])
+  if data["success"].(bool) == false {
+    err = errors.New(data["error"].(string))
+    log.Print(err.Error())
+    return nil, err
   }
 
   return client.GetUser(data["loginName"].(string))
@@ -119,11 +132,14 @@ func (client *Client) DisableUser(userName string) (*User, error) {
   err := client.makeRequest("POST", "/users/" + userName + "/command/disable", nil, &data)
   
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return nil, err
   }
 
-  if data["success"] == false {
-    log.Fatal(data["error"])
+  if data["success"].(bool) == false {
+    err = errors.New(data["error"].(string))
+    log.Print(err.Error())
+    return nil, err
   }
 
   return client.GetUser(data["loginName"].(string))
@@ -138,7 +154,8 @@ func (client *Client) SetUserPassword(userName string, password string) (bool) {
   err := client.makeRequest("POST", "/users/" + userName + "/command/reset-password", userData, &data)
 
   if err != nil {
-    log.Fatal(err)
+    log.Print(err.Error())
+    return false
   }
 
   return data["success"].(bool)
