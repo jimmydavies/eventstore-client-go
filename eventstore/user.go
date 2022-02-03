@@ -30,13 +30,6 @@ func (client *Client) GetUser(username string) (*User, error) {
     return nil, err
   }
 
-  if data["data"].(map[string]interface{})["groups"] != nil {
-    var groups []string
-    for _, group := range data["data"].(map[string]interface{})["groups"].([]interface{}) {
-      groups = append(groups, group.(string))
-    }
-  }
-
   return getUserFromMap(data["data"].(map[string]interface{})), nil
 }
 
@@ -171,9 +164,12 @@ func (client *Client) SetUserPassword(userName string, password string) (bool) {
 }
 
 func getUserFromMap(userData map[string]interface{}) (*User) {
-  var groups []string
-  for _, group := range userData["groups"].([]interface{}) {
-    groups = append(groups, group.(string))
+  groups := []string{}
+
+  if userData["groups"] != nil {
+    for _, group := range userData["groups"].([]interface{}) {
+      groups = append(groups, group.(string))
+    }
   }
 
   return &User{
