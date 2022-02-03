@@ -20,6 +20,13 @@ func (client *Client) GetUser(username string) (*User, error) {
 
   if err != nil {
     log.Print(err.Error())
+
+    re, ok := err.(*RequestError)
+    if ok && re.StatusCode == 404 {
+      //Not Found
+      return nil, nil
+    }
+      
     return nil, err
   }
 

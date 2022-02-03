@@ -43,6 +43,15 @@ func NewClient(baseUrl string, userName string, password string) (*Client, error
   }, nil
 }
 
+type RequestError struct {
+  StatusCode int
+  Err error
+}
+
+func (r *RequestError) Error() string {
+  return r.Err.Error()
+}
+
 func (client *Client) makeRequest(requestType string, path string, body []byte, dataStruct interface{}) (error) {
 
   if client.httpClient == nil {
@@ -81,7 +90,10 @@ func (client *Client) makeRequest(requestType string, path string, body []byte, 
 
   // Handle Status Codes
   if resp.StatusCode > 299 {
-    return errors.New("Request failed with status code " + resp.Status)
+    return &RequestError{
+      StatusCode: resp.StatusCode,
+      Err: errors.New("Request failed with status code " + resp.Status),
+    }
   }
 
   bodyText, err := ioutil.ReadAll(resp.Body)
